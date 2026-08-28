@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ExqTrends Algo · Top 100 Hyperliquid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root{--bg:#012624;--bg-card:#011d1c;--bg-surface:#003734;--border:rgba(237,255,254,0.06);--snow:#fff;--text:#bbc7c6;--muted:#6b8a89;--dim:#2c4947;--gold:#cbfffc;--accent:#00827c;--pos:#4ade80;--neg:#f87171;--neutral:#fad1ff;--font:'Inter',ui-sans-serif,system-ui,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:14px;padding:22px 20px;min-height:100vh}
+.wrap{max-width:1120px;margin:0 auto}
+
+.eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.eyebrow .lbl{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:2.4px;color:var(--muted)}
+h1{color:var(--snow);font-weight:500;font-size:24px;margin-bottom:4px}
+.sub{color:var(--muted);font-size:12.5px;margin-bottom:16px}
+
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:12px;color:var(--muted);margin-bottom:16px;align-items:center}
+.meta b{color:var(--text);font-weight:500}
+#countdown{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:500}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--pos);display:inline-block;box-shadow:0 0 0 0 rgba(74,222,128,.5);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,.45)}70%{box-shadow:0 0 0 7px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+
+/* aggregate chart (breadth) */
+.agg{background:var(--bg-card);border-radius:16px;padding:16px 18px;margin-bottom:16px}
+.agg-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.agg-t{font-size:10px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted)}
+.agg-t .big{display:block;color:var(--snow);font-size:22px;font-weight:500;letter-spacing:0;text-transform:none;margin-top:5px}
+.agg-t .big b{color:var(--pos);font-weight:500}
+.agg-t .big b.s{color:var(--neg)}
+.agg-leg{font-size:11px;color:var(--muted);text-align:right}
+#aggChart{height:150px;width:100%}
+
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.tabs{display:inline-flex;background:var(--bg-card);border-radius:8px;padding:3px;gap:2px}
+.tab{background:transparent;border:none;color:var(--muted);font-family:var(--font);font-size:12.5px;font-weight:500;padding:6px 13px;border-radius:6px;cursor:pointer;transition:.15s}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--bg-surface);color:var(--gold)}
+.tab .n{color:var(--muted);font-size:10px;margin-left:5px}
+.tab.active .n{color:var(--accent)}
+input.search{margin-left:auto;background:var(--bg-surface);color:var(--snow);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-family:var(--font);font-size:13px;outline:none;min-width:180px}
+.summary{font-size:12.5px;color:var(--muted)}
+.summary b{color:var(--pos);font-weight:500}
+.summary b.s{color:var(--neg)}
+
+.card{background:var(--bg-card);border-radius:16px;padding:6px 4px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 12px;text-align:right;white-space:nowrap}
+th:nth-child(1),th:nth-child(2),td:nth-child(1),td:nth-child(2){text-align:left}
+thead th{color:var(--muted);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:1px;cursor:pointer;user-select:none;border-bottom:1px solid var(--border)}
+thead th:hover{color:var(--text)}
+th .ar{opacity:.5;font-size:8px}
+tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:.1s}
+tbody tr:hover{background:var(--bg-surface)}
+.rank{color:var(--dim);font-size:11px;width:30px}
+.tk{color:var(--snow);font-weight:500}
+.tk .ext{color:var(--dim);font-size:10px;margin-left:5px;opacity:0}
+tbody tr:hover .tk .ext{opacity:1}
+.pill{display:inline-block;font-size:10px;font-weight:500;padding:2px 9px;border-radius:5px;letter-spacing:.4px}
+.pill.long{background:rgba(74,222,128,.14);color:var(--pos)}
+.pill.short{background:rgba(248,113,113,.14);color:var(--neg)}
+.pill.flat{background:rgba(107,138,137,.12);color:var(--muted)}
+.pill.na{background:rgba(107,138,137,.08);color:var(--dim)}
+.up{color:var(--pos)}.dn{color:var(--neg)}.mut{color:var(--muted)}
+.note{font-size:11px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.6}
+.empty{text-align:center;color:var(--muted);padding:60px 20px}
+@media(max-width:720px){ th:nth-child(3),td:nth-child(3),th:nth-child(8),td:nth-child(8){display:none} }
+
+/* per-asset modal chart */
+#modal{position:fixed;inset:0;background:rgba(1,15,14,.7);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#modal.open{display:flex}
+.modal-box{background:var(--bg-card);border-radius:18px;width:min(960px,96vw);max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-hd{display:flex;align-items:center;gap:14px;padding:16px 20px;flex-wrap:wrap}
+.modal-hd .nm{color:var(--snow);font-size:18px;font-weight:500}
+.modal-hd .meta2{font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.modal-hd .sp{flex:1}
+.modal-hd .x{cursor:pointer;color:var(--muted);font-size:22px;line-height:1;padding:0 4px}
+.modal-hd .x:hover{color:var(--snow)}
+.modal-legend{padding:0 20px 6px;font-size:11px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+.modal-legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:5px;border-radius:2px}
+#modalChart{height:min(56vh,460px);width:100%;padding:0 8px 10px}
+.modal-warn{padding:0 20px 12px;font-size:12px;color:var(--neutral);display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow"><span class="dot"></span><span class="lbl">SFinance · ExqTrends Algo · Hyperliquid</span></div>
+  <h1>ExqTrends Algo — Top 100 Hyperliquid</h1>
+  <div class="sub">ExqTrends Algo — adaptive 4-pole channel filter (1D) across the 100 most liquid perps. Server-side snapshot.</div>
+
+  <div class="meta">
+    <span><span class="live-dot"></span> &nbsp;Updated: <b id="mUpd">—</b></span>
+    <span>List (top 100): <b id="mUni">—</b></span>
+    <span>Next update: <span id="countdown">—</span></span>
+    <span id="mSched" class="mut"></span>
+  </div>
+
+  <div class="agg">
+    <div class="agg-top">
+      <div class="agg-t">Breadth — % of the 100 in LONG vs SHORT
+        <span class="big"><span id="aggNow">—</span> <span id="aggCount" style="font-size:13px;color:var(--muted)"></span></span>
+      </div>
+      <div class="agg-leg">how many of the 100 are on each side<br>per ExqTrends Algo · last 180 days</div>
+    </div>
+    <div id="aggChart"></div>
+  </div>
+
+  <div class="bar">
+    <div class="tabs">
+      <button class="tab active" data-tab="all">All <span class="n" id="nAll">·</span></button>
+      <button class="tab" data-tab="long">LONG <span class="n" id="nLong">·</span></button>
+      <button class="tab" data-tab="short">SHORT <span class="n" id="nShort">·</span></button>
+      <button class="tab" data-tab="flat">FLAT <span class="n" id="nFlat">·</span></button>
+    </div>
+    <span class="summary" id="summary">—</span>
+    <input class="search" id="search" placeholder="Search ticker…">
+  </div>
+
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th data-sort="rank">#</th>
+        <th data-sort="coin">Asset</th>
+        <th data-sort="vol24h">Vol 24h</th>
+        <th data-sort="state">Status</th>
+        <th data-sort="trend">Trend</th>
+        <th data-sort="price">Price</th>
+        <th data-sort="dist">Band dist.</th>
+        <th data-sort="lastSigDate">Last signal</th>
+      </tr></thead>
+      <tbody id="tbody"><tr><td colspan="8"><div class="empty" id="loading">Loading radar…</div></td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="note" id="note">
+    ExqTrends Algo status per asset · LONG = price above the high band · SHORT = below the low band · FLAT = inside the channel (neutral zone) · Band dist. = close vs. the active band.
+    Click a row to open that asset's chart right here. The list of 100 refreshes ~1×/month; statuses, 2×/day.
+  </div>
+</div>
+
+<!-- per-asset modal chart (inline, no navigation) -->
+<div id="modal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <span class="nm" id="mNm">—</span>
+      <div class="meta2" id="mMeta"></div>
+      <span class="sp"></span>
+      <span class="x" onclick="closeModal()">✕</span>
+    </div>
+    <div class="modal-legend">
+      <span><i style="background:var(--gold)"></i>ExqTrends Algo filter (green rising / red falling)</span>
+      <span><i style="background:var(--accent)"></i>High / low band ±TR·1.414</span>
+      <span><span style="color:var(--pos)">▲ L</span> Long entry &nbsp; <span style="color:var(--neg)">▼ S</span> Short entry</span>
+    </div>
+    <div class="modal-warn" id="mWarn"></div>
+    <div id="modalChart"></div>
+  </div>
+</div>
+
+<script>
+const DATA_URL = 'https://sfinance-murex.vercel.app/reportes/radar_gauss.json';
+const INFO_URL = 'https://api.hyperliquid.xyz/info';
+let assets = [], gen = null, tab = 'all', sortCol = null, sortDir = 'desc';
+
+const $ = id => document.getElementById(id);
+const fmtVol = v => v>=1e9 ? '$'+(v/1e9).toFixed(1)+'B' : v>=1e6 ? '$'+(v/1e6).toFixed(0)+'M' : v>=1e3 ? '$'+(v/1e3).toFixed(0)+'K' : '$'+v;
+const fmtPx = v => v>=1000 ? v.toLocaleString('en',{maximumFractionDigits:0}) : v>=1 ? v.toFixed(2) : v>=0.01 ? v.toFixed(4) : v.toPrecision(3);
+function ago(iso){ const s=(Date.now()-new Date(iso).getTime())/1000; if(s<3600)return Math.floor(s/60)+'m'; if(s<86400)return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m'; return Math.floor(s/86400)+'d'; }
+function fmtDate(iso){ if(!iso)return '—'; return new Date(iso+'T00:00:00Z').toLocaleDateString('en',{day:'2-digit',month:'short',year:'2-digit'}); }
+function fmtSchedule(hours){ if(!hours || !hours.length) return ''; return 'scheduled ~'+hours.map(h=>String(h).padStart(2,'0')+':00 UTC').join(' / '); }
+
+// ── ExqTrends Algo (1:1 port) for the modal chart ──
+const A_N=4,A_PER=144,A_MULT=1.414;
+const COEF={4:[6,4,1,0,0,0,0,0]};
+function algoFilter(src,alpha,n){const x=1-alpha,m=COEF[n],aN=Math.pow(alpha,n),L=src.length,f=new Float64Array(L);
+ for(let t=0;t<L;t++){let v=aN*src[t];if(t>=1)v+=n*x*f[t-1];for(let k=2;k<=n;k++){if(t>=k){const cf=m[k-2]*Math.pow(x,k);v+=(k%2===0?-1:1)*cf*f[t-k];}}f[t]=v;}return f;}
+function trueRange(h,l,c){const L=c.length,tr=new Float64Array(L);tr[0]=h[0]-l[0];for(let t=1;t<L;t++)tr[t]=Math.max(h[t]-l[t],Math.abs(h[t]-c[t-1]),Math.abs(l[t]-c[t-1]));return tr;}
+function algoChannel(o,h,l,c){const L=c.length,src=new Float64Array(L);for(let i=0;i<L;i++)src[i]=(h[i]+l[i]+c[i])/3;
+ const beta=(1-Math.cos(2*Math.PI/A_PER))/(Math.pow(1.414,2/A_N)-1),alpha=-beta+Math.sqrt(beta*beta+2*beta);
+ const filt=algoFilter(src,alpha,A_N),filttr=algoFilter(trueRange(h,l,c),alpha,A_N);
+ const hband=new Float64Array(L),lband=new Float64Array(L);for(let i=0;i<L;i++){hband[i]=filt[i]+filttr[i]*A_MULT;lband[i]=filt[i]-filttr[i]*A_MULT;}return {filt,hband,lband};}
+
+async function fetchHistory(coin){
+  const end=Date.now(), start=end-1500*86400000;
+  const body={type:"candleSnapshot",req:{coin,interval:"1d",startTime:start,endTime:end}};
+  const r=await fetch(INFO_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  const raw=await r.json(), seen=new Map(); for(const k of raw) seen.set(k.t,k);
+  return [...seen.values()].sort((a,b)=>a.t-b.t);
+}
+
+async function load(){
+  let data=null;
+  for(const u of ['radar_gauss.json', DATA_URL]){
+    try{ const r=await fetch(u); if(!r.ok)continue; data=await r.json(); break; }catch(e){}
+  }
+  if(!data){ $('loading').textContent='Could not load radar data (not generated yet).'; return; }
+  assets=data.assets||[]; gen=data;
+  $('mUpd').textContent = data.generated_at ? ago(data.generated_at)+' ago' : '—';
+  $('mUni').textContent = data.universe_updated ? fmtDate(data.universe_updated.slice(0,10)) : '—';
+  $('mSched').textContent = fmtSchedule(data.schedule_utc);
+  render();
+  renderAgg(data.history||[]);
+  startCountdown(data.schedule_utc||[0,12]);
+}
+
+function counts(){ const L=assets.filter(a=>a.state==='LONG').length,
+    S=assets.filter(a=>a.state==='SHORT').length,
+    F=assets.filter(a=>a.state==='FLAT').length;
+  $('nAll').textContent=assets.length; $('nLong').textContent=L; $('nShort').textContent=S; $('nFlat').textContent=F;
+  $('summary').innerHTML='<b>'+L+'</b> LONG · <b class="s">'+S+'</b> SHORT / '+assets.length; }
+
+function stateRank(a){ return a.state==='LONG'?3:a.state==='SHORT'?2:a.state==='FLAT'?1:0; }
+function sortRows(rows){
+  if(!sortCol){ return rows.sort((a,b)=> stateRank(b)-stateRank(a) || (b.dist??-1e9)-(a.dist??-1e9)); }
+  const dir=sortDir==='asc'?1:-1;
+  return rows.sort((a,b)=>{
+    let x=a[sortCol], y=b[sortCol];
+    if(sortCol==='trend'){ x=a.trendUp?1:0; y=b.trendUp?1:0; }
+    if(sortCol==='state'){ x=stateRank(a); y=stateRank(b); }
+    if(x==null)x=dir>0?Infinity:-Infinity; if(y==null)y=dir>0?Infinity:-Infinity;
+    if(typeof x==='string'){ return x.localeCompare(y)*dir; }
+    return (x-y)*dir;
+  });
+}
+
+function render(){
+  counts();
+  const q=$('search').value.trim().toUpperCase();
+  let rows=assets.filter(a=>{
+    if(tab==='long'&&a.state!=='LONG')return false;
+    if(tab==='short'&&a.state!=='SHORT')return false;
+    if(tab==='flat'&&a.state!=='FLAT')return false;
+    if(q&&!a.coin.toUpperCase().includes(q))return false;
+    return true;
+  });
+  rows=sortRows(rows);
+  if(!rows.length){ $('tbody').innerHTML='<tr><td colspan="8"><div class="empty">No results</div></td></tr>'; return; }
+  $('tbody').innerHTML=rows.map(a=>{
+    const na=a.state==='NA';
+    const pill = na?'<span class="pill na">no data</span>'
+      : '<span class="pill '+(a.state==='LONG'?'long':a.state==='SHORT'?'short':'flat')+'">'+a.state+'</span>';
+    const trend = na?'<span class="mut">—</span>' : (a.trendUp?'<span class="up">▲</span>':'<span class="dn">▼</span>');
+    const dist = (a.dist==null)?'<span class="mut">—</span>' : '<span class="'+(a.dist>=0?'up':'dn')+'">'+(a.dist>=0?'+':'')+a.dist.toFixed(1)+'%</span>';
+    const price = (a.price==null)?'—':'$'+fmtPx(a.price);
+    const BULL={long_entry:1,short_exit:1,entry:1}, BEAR={long_exit:1,short_entry:1,exit:1};
+    const sig = a.lastSig ? (BULL[a.lastSig]?'<span class="up">▲ '+fmtDate(a.lastSigDate)+'</span>':BEAR[a.lastSig]?'<span class="dn">▼ '+fmtDate(a.lastSigDate)+'</span>':'<span class="mut">—</span>') : '<span class="mut">—</span>';
+    return '<tr onclick="openModal(\''+a.coin+'\')">'
+      +'<td class="rank">'+a.rank+'</td>'
+      +'<td class="tk">'+a.coin+'<span class="ext">↗</span></td>'
+      +'<td>'+fmtVol(a.vol24h||0)+'</td>'
+      +'<td>'+pill+'</td>'
+      +'<td>'+trend+'</td>'
+      +'<td>'+price+'</td>'
+      +'<td>'+dist+'</td>'
+      +'<td>'+sig+'</td></tr>';
+  }).join('');
+}
+
+// ── Aggregate chart (% LONG over time) ──
+let aggChart=null;
+function renderAgg(hist){
+  const now = hist.length ? hist[hist.length-1] : null;
+  if(now){
+    const sp = now.shortPct!=null?now.shortPct:0;
+    $('aggNow').innerHTML = '<b>'+now.longPct.toFixed(0)+'%</b> LONG · <b class="s">'+sp.toFixed(0)+'%</b> SHORT';
+    $('aggCount').textContent = '· '+now.long+'L / '+(now.short!=null?now.short:0)+'S of '+now.valid;
+  }
+  if(!hist.length || typeof LightweightCharts==='undefined') return;
+  if(aggChart){ aggChart.remove(); aggChart=null; }
+  aggChart = LightweightCharts.createChart($('aggChart'), {
+    layout:{ background:{color:'#011d1c'}, textColor:'#6b8a89' },
+    grid:{ vertLines:{color:'rgba(203,255,252,0.03)'}, horzLines:{color:'rgba(203,255,252,0.03)'} },
+    rightPriceScale:{ borderColor:'rgba(237,255,254,0.06)', scaleMargins:{top:0.12,bottom:0.06} },
+    timeScale:{ borderColor:'rgba(237,255,254,0.06)', timeVisible:false },
+    localization:{ locale:'en-US' },
+    handleScroll:false, handleScale:false,
+    width:$('aggChart').clientWidth, height:$('aggChart').clientHeight,
+  });
+  const toPt=k=>hist.map(h=>({ time: Math.floor(new Date(h.date+'T00:00:00Z').getTime()/1000), value: h[k]!=null?h[k]:0 }));
+  const sL=aggChart.addAreaSeries({ lineColor:'#4ade80', topColor:'rgba(74,222,128,0.24)', bottomColor:'rgba(74,222,128,0.02)', lineWidth:2, priceLineVisible:false, lastValueVisible:false, priceFormat:{type:'custom',formatter:v=>v.toFixed(0)+'%'} });
+  sL.setData(toPt('longPct'));
+  const sS=aggChart.addAreaSeries({ lineColor:'#f87171', topColor:'rgba(248,113,113,0.18)', bottomColor:'rgba(248,113,113,0.02)', lineWidth:2, priceLineVisible:false, lastValueVisible:false, priceFormat:{type:'custom',formatter:v=>v.toFixed(0)+'%'} });
+  sS.setData(toPt('shortPct'));
+  aggChart.timeScale().fitContent();
+  new ResizeObserver(()=>{ if(aggChart) aggChart.applyOptions({width:$('aggChart').clientWidth, height:$('aggChart').clientHeight}); }).observe($('aggChart'));
+}
+
+// ── Per-asset modal chart (inline) ──
+let modalChart=null;
+function lineData(vals,times,start){ const a=[]; for(let i=start;i<times.length;i++){ const v=vals[i]; if(v!=null&&!isNaN(v)) a.push({time:times[i],value:v}); } return a; }
+function filtData(vals,times,start){ const a=[]; for(let i=start;i<times.length;i++){ const v=vals[i]; if(v==null||isNaN(v))continue; const col=i>0&&!isNaN(vals[i-1])?(v>=vals[i-1]?'#4ade80':'#f87171'):'#cbfffc'; a.push({time:times[i],value:v,color:col}); } return a; }
+
+async function openModal(coin){
+  const a=assets.find(x=>x.coin===coin)||{};
+  $('mNm').textContent=coin;
+  const stTxt = a.state==='LONG'?'<span class="up">LONG</span>':a.state==='SHORT'?'<span class="dn">SHORT</span>':a.state==='FLAT'?'FLAT':'no data';
+  $('mMeta').innerHTML = 'Status: '+stTxt + (a.price!=null?' · $'+fmtPx(a.price):'') + (a.dist!=null?' · dist '+(a.dist>=0?'+':'')+a.dist.toFixed(1)+'%':'');
+  $('mWarn').style.display='none';
+  $('modal').classList.add('open');
+  if(modalChart){ modalChart.remove(); modalChart=null; }
+  $('modalChart').innerHTML='';
+  try{
+    const raw=await fetchHistory(coin);
+    if(!raw.length) throw new Error('no data');
+    const times=[],O=[],H=[],L=[],C=[];
+    for(const k of raw){ times.push(Math.floor(k.t/1000)); O.push(+k.o); H.push(+k.h); L.push(+k.l); C.push(+k.c); }
+    if(times.length < A_PER+5){ $('mWarn').textContent='⚠ '+coin+' has only '+times.length+' candles; the filter (period 144) needs ~144 for warm-up.'; $('mWarn').style.display='block'; }
+    modalChart = LightweightCharts.createChart($('modalChart'), {
+      layout:{ background:{color:'#011d1c'}, textColor:'#6b8a89' },
+      grid:{ vertLines:{color:'rgba(203,255,252,0.03)'}, horzLines:{color:'rgba(203,255,252,0.03)'} },
+      rightPriceScale:{ borderColor:'rgba(237,255,254,0.06)', scaleMargins:{top:0.08,bottom:0.06} },
+      timeScale:{ borderColor:'rgba(237,255,254,0.06)', timeVisible:false },
+      localization:{ locale:'en-US' },
+      width:$('modalChart').clientWidth, height:$('modalChart').clientHeight,
+    });
+    const cs=modalChart.addCandlestickSeries({ upColor:'#10b981',downColor:'#ef4444',borderUpColor:'#10b981',borderDownColor:'#ef4444',wickUpColor:'rgba(16,185,129,0.55)',wickDownColor:'rgba(239,68,68,0.55)', priceFormat:{type:'price',precision:C[C.length-1]>=1000?0:C[C.length-1]>=1?2:6,minMove:C[C.length-1]>=1000?1:C[C.length-1]>=1?0.01:0.000001} });
+    cs.setData(times.map((t,i)=>({time:t,open:O[i],high:H[i],low:L[i],close:C[i]})));
+    const b=algoChannel(O,H,L,C);
+    modalChart.addLineSeries({color:'#00827c',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false}).setData(lineData(b.hband,times,A_PER));
+    modalChart.addLineSeries({color:'rgba(0,130,124,0.6)',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false}).setData(lineData(b.lband,times,A_PER));
+    modalChart.addLineSeries({color:'#cbfffc',lineWidth:2,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false}).setData(filtData(b.filt,times,A_PER));
+    // markers for close vs hband crossovers
+    const mk=[];
+    for(let t=1;t<C.length;t++){ if(t<A_PER)continue;
+      if(C[t-1]<=b.hband[t-1]&&C[t]>b.hband[t]) mk.push({time:times[t],position:'belowBar',color:'#4ade80',shape:'arrowUp',text:'L',size:1.3});          // long entry
+      else if(C[t-1]>=b.hband[t-1]&&C[t]<b.hband[t]) mk.push({time:times[t],position:'aboveBar',color:'#f87171',shape:'arrowDown',size:1});                 // long exit
+      else if(C[t-1]>=b.lband[t-1]&&C[t]<b.lband[t]) mk.push({time:times[t],position:'aboveBar',color:'#f87171',shape:'arrowDown',text:'S',size:1.3});      // short entry
+      else if(C[t-1]<=b.lband[t-1]&&C[t]>b.lband[t]) mk.push({time:times[t],position:'belowBar',color:'#4ade80',shape:'arrowUp',size:1});                   // short cover
+    }
+    cs.setMarkers(mk);
+    // Default view: last ~6 months (the channel is computed over the full history
+    // for the 144-bar warm-up, but only the recent range is shown). Price auto-scales to the visible range.
+    const lastT = times[times.length-1];
+    modalChart.timeScale().setVisibleRange({ from: Math.max(times[0], lastT - 183*86400), to: lastT });
+    modalChart.priceScale('right').applyOptions({ autoScale: true });
+    new ResizeObserver(()=>{ if(modalChart) modalChart.applyOptions({width:$('modalChart').clientWidth, height:$('modalChart').clientHeight}); }).observe($('modalChart'));
+  }catch(e){ $('mWarn').textContent='Could not load chart for '+coin+': '+e.message; $('mWarn').style.display='block'; }
+}
+function closeModal(){ $('modal').classList.remove('open'); if(modalChart){ modalChart.remove(); modalChart=null; } }
+$('modal').addEventListener('click', e=>{ if(e.target.id==='modal') closeModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+// ── countdown to next UTC slot (00:00 / 12:00) ──
+function nextUpdate(hours){
+  const now=new Date(); let best=null;
+  for(let d=0;d<2;d++) for(const h of hours){
+    const t=new Date(now); t.setUTCDate(t.getUTCDate()+d); t.setUTCHours(h,0,0,0);
+    if(t>now && (!best||t<best)) best=t;
+  }
+  return best;
+}
+function startCountdown(hours){
+  function tick(){
+    const diff=nextUpdate(hours)-new Date();
+    if(diff<=0){ $('countdown').textContent='updating…'; return; }
+    const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+    $('countdown').textContent=String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m '+String(s).padStart(2,'0')+'s';
+    if(gen) $('mUpd').textContent=ago(gen.generated_at)+' ago';
+  }
+  tick(); setInterval(tick,1000);
+}
+
+// UI
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); tab=b.dataset.tab; render(); });
+$('search').oninput=render;
+document.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
+  const c=th.dataset.sort; if(sortCol===c){ sortDir=sortDir==='asc'?'desc':'asc'; } else { sortCol=c; sortDir=(c==='coin')?'asc':'desc'; }
+  document.querySelectorAll('thead th .ar').forEach(e=>e.remove());
+  const ar=document.createElement('span'); ar.className='ar'; ar.textContent=sortDir==='asc'?' ▲':' ▼'; th.appendChild(ar);
+  render();
+});
+load();
+</script>
+</body>
+</html>

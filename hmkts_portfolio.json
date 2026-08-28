@@ -1,0 +1,77 @@
+{
+  "asOf": "2026-08-20",
+  "positions": [
+    {
+      "coin": "LINK",
+      "side": "long",
+      "entryPx": 8.72063,
+      "weightPct": 9.62
+    },
+    {
+      "coin": "GRIFFAIN",
+      "side": "long",
+      "entryPx": 0.011081,
+      "weightPct": 9.49
+    },
+    {
+      "coin": "XMR",
+      "side": "long",
+      "entryPx": 364.17,
+      "weightPct": 9.47
+    },
+    {
+      "coin": "CRV",
+      "side": "long",
+      "entryPx": 0.24065,
+      "weightPct": 9.17
+    },
+    {
+      "coin": "BNB",
+      "side": "long",
+      "entryPx": 603.24,
+      "weightPct": 8.85
+    },
+    {
+      "coin": "PAXG",
+      "side": "long",
+      "entryPx": 4335.1,
+      "weightPct": 8.41
+    },
+    {
+      "coin": "BTC",
+      "side": "long",
+      "entryPx": 69354.0,
+      "weightPct": 7.9
+    },
+    {
+      "coin": "SOL",
+      "side": "long",
+      "entryPx": 84.658,
+      "weightPct": 7.86
+    },
+    {
+      "coin": "ETH",
+      "side": "long",
+      "entryPx": 2253.5,
+      "weightPct": 7.77
+    },
+    {
+      "coin": "XLM",
+      "side": "short",
+      "entryPx": 0.17169,
+      "weightPct": 5.35
+    },
+    {
+      "coin": "DOT",
+      "side": "short",
+      "entryPx": 0.84112,
+      "weightPct": 4.94
+    },
+    {
+      "coin": "KAITO",
+      "side": "short",
+      "entryPx": 0.44571,
+      "weightPct": 3.88
+    }
+  ]
+}

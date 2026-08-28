@@ -159,6 +159,25 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 28px 60px; }
 .iframe-wrap { border: 1px solid var(--border); border-radius: 0 0 10px 10px; overflow: hidden; }
 .rpt-iframe { width: 100%; min-height: 900px; border: none; display: block; background: #011d1c; }
 
+/* ── ALGO SUMMARY: fresh entries + current portfolio ── */
+.algo-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+@media (max-width: 860px) { .algo-summary { grid-template-columns: 1fr; } }
+.algo-card { background: var(--bg-card); border-radius: 14px; padding: 16px 17px; }
+.algo-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.algo-card-title { font-size: 12px; font-weight: 500; color: var(--snow); }
+.algo-empty { color: var(--dim); font-size: 11px; padding: 10px 0; }
+.algo-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border); font-size: 11.5px; }
+.algo-row:first-child { border-top: none; }
+.algo-coin { color: var(--snow); font-weight: 500; }
+.algo-price { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+.algo-sub { color: var(--dim); font-size: 9.5px; min-width: 44px; text-align: right; }
+.weight-cell { display: flex; align-items: center; gap: 7px; width: 84px; flex-shrink: 0; }
+.weight-bar { flex: 1; height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; }
+.weight-fill { display: block; height: 100%; border-radius: 2px; }
+.weight-fill.long { background: var(--pos); }
+.weight-fill.short { background: var(--neg); }
+.weight-pct { font-size: 10.5px; color: var(--text); font-variant-numeric: tabular-nums; min-width: 32px; text-align: right; }
+
 /* ── WHALE TRACKING ── */
 .watch-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px; }
 @media (max-width: 720px) { .watch-row { grid-template-columns: 1fr; } }
@@ -311,6 +330,24 @@ footer { border-top: 1px solid var(--border); padding: 20px 28px; text-align: ce
       <h2>🤖 Algorithmic Trading</h2>
     </div>
     <p class="panel-intro">Live signal radar across the top 100 Hyperliquid perps — trend state, breadth, and per-asset detail. Same engine that powers the rest of SFinance's crypto tools.</p>
+
+    <div class="algo-summary">
+      <div class="algo-card">
+        <div class="algo-card-head">
+          <span class="algo-card-title">Fresh Entries</span>
+          <span class="live-badge"><span class="live-dot"></span>Live · ExqTrends Algo</span>
+        </div>
+        <div id="fresh-entries-list"><div class="algo-empty">Loading…</div></div>
+      </div>
+      <div class="algo-card">
+        <div class="algo-card-head">
+          <span class="algo-card-title">Current Portfolio</span>
+          <span class="demo-badge" id="portfolio-asof">Snapshot</span>
+        </div>
+        <div id="portfolio-list"><div class="algo-empty">Loading…</div></div>
+      </div>
+    </div>
+
     <div class="iframe-bar">
       <span class="live-dot"></span>
       <span>ExqTrends Algo — Top 100 Hyperliquid perps</span>
@@ -575,6 +612,52 @@ function connectTicker() {
 
 buildTicker();
 connectTicker();
+
+/* ── ALGO SUMMARY: fresh entries from radar_gauss.json ── */
+const BREAKOUT_DAYS = 25;
+fetch('radar_gauss.json').then(r => r.json()).then(data => {
+  const now = new Date();
+  const entries = (data.assets || [])
+    .filter(a => a.lastSig === 'long_entry' || a.lastSig === 'short_entry')
+    .map(a => ({ ...a, daysAgo: Math.round((now - new Date(a.lastSigDate)) / 86400000) }))
+    .filter(a => a.daysAgo >= 0 && a.daysAgo <= BREAKOUT_DAYS)
+    .sort((a, b) => new Date(b.lastSigDate) - new Date(a.lastSigDate))
+    .slice(0, 8);
+
+  const list = document.getElementById('fresh-entries-list');
+  if (!entries.length) { list.innerHTML = '<div class="algo-empty">No fresh entries in the last ' + BREAKOUT_DAYS + ' days.</div>'; return; }
+  list.innerHTML = entries.map(a => {
+    const dir = a.lastSig === 'long_entry' ? 'long' : 'short';
+    return '<div class="algo-row">' +
+      '<span class="dir-tag dir-' + dir + '">' + (dir === 'long' ? 'Long' : 'Short') + '</span>' +
+      '<span class="algo-coin">' + a.coin + '</span>' +
+      '<span class="algo-price">' + formatPrice(a.price) + '</span>' +
+      '<span class="algo-sub">' + a.daysAgo + 'd ago</span>' +
+    '</div>';
+  }).join('');
+}).catch(() => {
+  document.getElementById('fresh-entries-list').innerHTML = '<div class="algo-empty">Couldn\'t load radar data.</div>';
+});
+
+/* ── ALGO SUMMARY: current portfolio snapshot ── */
+const WEIGHT_BAR_MAX = 15;
+fetch('hmkts_portfolio.json').then(r => r.json()).then(data => {
+  document.getElementById('portfolio-asof').textContent = 'Snapshot · ' + data.asOf;
+  const list = document.getElementById('portfolio-list');
+  if (!data.positions || !data.positions.length) { list.innerHTML = '<div class="algo-empty">No open positions.</div>'; return; }
+  list.innerHTML = data.positions.map(p => {
+    const barWidth = Math.min(p.weightPct / WEIGHT_BAR_MAX * 100, 100);
+    return '<div class="algo-row">' +
+      '<span class="dir-tag dir-' + p.side + '">' + (p.side === 'long' ? 'Long' : 'Short') + '</span>' +
+      '<span class="algo-coin">' + p.coin + '</span>' +
+      '<span class="algo-price">' + formatPrice(p.entryPx) + '</span>' +
+      '<span class="weight-cell"><span class="weight-bar"><span class="weight-fill ' + p.side + '" style="width:' + barWidth + '%"></span></span><span class="weight-pct">' + p.weightPct.toFixed(1) + '%</span></span>' +
+    '</div>';
+  }).join('');
+}).catch(() => {
+  document.getElementById('portfolio-list').innerHTML = '<div class="algo-empty">Couldn\'t load portfolio snapshot.</div>';
+  document.getElementById('portfolio-asof').textContent = '';
+});
 
 /* ── PILLARS: nav switch ── */
 document.querySelectorAll('.pillar-card').forEach(card => {
